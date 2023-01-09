@@ -59,6 +59,22 @@ spec:
               value: {{ .Values.global.elasticsearch.port | quote }}
             - name: SKIP_ELASTICSEARCH_CHECK
               value: {{ .Values.global.elasticsearch.skipcheck | quote }}
+            - name: ELASTICSEARCH_SSL_PROTOCOL
+              value: {{ .Values.global.elasticsearch.sslProtocol | quote }}
+            # - name: ELASTICSEARCH_SSL_SECURE_RANDOM_IMPL
+            #   value: {{ .Values.global.elasticsearch.sslSecureRandomImpl | quote }}
+            - name: ELASTICSEARCH_SSL_TRUSTSTORE_FILE
+              value: {{ .Values.global.elasticsearch.sslTruststoreFile | quote }}
+            - name: ELASTICSEARCH_SSL_TRUSTSTORE_TYPE
+              value: {{ .Values.global.elasticsearch.sslTruststoreType | quote }}
+            - name: ELASTICSEARCH_SSL_TRUSTSTORE_PASSWORD
+              value: {{ .Values.global.elasticsearch.sslTruststorePassword | quote }}
+            - name: ELASTICSEARCH_SSL_KEYSTORE_FILE
+              value: {{ .Values.global.elasticsearch.sslKeystoreFile | quote }}
+            - name: ELASTICSEARCH_SSL_KEYSTORE_TYPE
+              value: {{ .Values.global.elasticsearch.sslKeystoreType | quote }}
+            - name: ELASTICSEARCH_SSL_KEYSTORE_PASSWORD
+              value: {{ .Values.global.elasticsearch.sslKeystorePassword | quote }}
             - name: ELASTICSEARCH_INSECURE
               value: {{ .Values.global.elasticsearch.insecure | quote }}
             {{- with .Values.global.elasticsearch.useSSL }}

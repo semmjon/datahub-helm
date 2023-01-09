@@ -12,6 +12,8 @@ datahub-gms:
   #     password:
   #       secretRef: gms-secret
   #       secretKey: gms-password
+  service:
+    type: ClusterIP
 
 datahub-frontend:
   enabled: true
@@ -22,11 +24,46 @@ datahub-frontend:
   ingress:
     enabled: false
 
+  service:
+    type: ClusterIP
+
 acryl-datahub-actions:
   enabled: true
   image:
     repository: acryldata/datahub-actions
-    tag: "v0.0.7"
+    tag: "v0.0.10"
+  extraEnvs:
+    - name: REQUESTS_CA_BUNDLE
+      value: /etc/ssl/certs/ca-certificates.crt
+    - name: SSL_CERT_DIR
+      value: /etc/ssl/certs
+    - name: SSL_CERT_FILE
+      value: /usr/local/share/ca-certificates/pukirootca1.crt
+  extraInitContainers:
+    - command:
+      - /bin/bash
+      - -c
+      - apt install --reinstall ca-certificates && curl https://pub.pki.1and1.org/pukirootca1.crt -o /usr/local/share/ca-certificates/pukirootca1.crt && update-ca-certificates --fresh
+      image: "acryldata/datahub-actions:v0.0.4"
+      name: cert-patcher-init
+      securityContext:
+        privileged: true
+        runAsUser: 0
+      volumeMounts:
+      - mountPath: /etc/ssl/certs
+        name: shared-ca-certificate-vol
+      - mountPath: /usr/local/share/ca-certificates
+        name: usr-shared-ca-certificate-vol
+  extraVolumeMounts:
+    - mountPath: /etc/ssl/certs
+      name: shared-ca-certificate-vol
+    - mountPath: /usr/local/share/ca-certificates
+      name: usr-shared-ca-certificate-vol
+  extraVolumes: 
+    - emptyDir: {}
+      name: shared-ca-certificate-vol
+    - emptyDir: {}
+      name: usr-shared-ca-certificate-vol
   resources:
     limits:
       memory: 512Mi
@@ -54,12 +91,23 @@ elasticsearchSetupJob:
   enabled: true
   image:
     repository: linkedin/datahub-elasticsearch-setup
-    # tag: "v0.9.3" # defaults to .global.datahub.version
+    # tag: "v0.9.4" # defaults to .global.datahub.version
   podSecurityContext:
     fsGroup: 1000
   securityContext:
     runAsUser: 1000
   podAnnotations: {}
+  # extraVolumes:
+  #   - name: elasticsearch-master-certs
+  #     secret:
+  #       secretName: elasticsearch-master-certs
+  #       items:
+  #       - key: ca.crt
+  #         path: ca.crt
+  # extraVolumeMounts:
+  #   - mountPath: "/extra-certs"
+  #     name: elasticsearch-master-certs
+  #     readOnly: true
 
 kafkaSetupJob:
   enabled: true
@@ -108,7 +156,7 @@ datahubUpgrade:
   enabled: true
   image:
     repository: acryldata/datahub-upgrade
-    # tag: "v0.9.3"# defaults to .global.datahub.version
+    tag: "v0.9.3"  # defaults to .global.datahub.version
   batchSize: 1000
   batchDelayMs: 100
   noCodeDataMigration:
@@ -136,9 +184,20 @@ global:
   elasticsearch:
     host: "elasticsearch-master"
     port: "9200"
-    skipcheck: "false"
-    insecure: "false"
-    useSSL: "false"
+    skipcheck: false
+    insecure: false
+    useSSL: false
+
+  # springKafkaConfigurationOverrides:
+  #   connections.max.idle.ms: "1500000"
+  #   request.timeout.ms: "1200000"
+  #   session.timeout.ms : "120000"
+  #   heartbeat.interval.ms: "30000"
+  #   fetch.max.wait.ms: "2000"
+  #   max.poll.interval.ms: "10000000"
+  #   fetch.max.bytes: "10000000"
+  #   auto.offset.reset: earliest
+  #   max.poll.records: "10000"
 
   kafka:
     bootstrap:
@@ -191,7 +250,7 @@ global:
       #   value: password
 
   datahub:
-    version: v0.9.3
+    version: v0.9.4
     gms:
       port: "8080"
       nodePort: "30001"
@@ -221,7 +280,7 @@ global:
       defaultCliVersion: "0.9.1"
 
     metadata_service_authentication:
-      enabled: false
+      enabled: true
       systemClientId: "__datahub_system"
       systemClientSecret:
         secretRef: "datahub-auth-secrets"

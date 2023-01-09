@@ -2,8 +2,25 @@
 # Copy this file and update to the configuration of choice
 elasticsearch:
   enabled: true   # set this to false, if you want to provide your own ES instance.
-  replicas: 3
+  replicas: 1
   minimumMasterNodes: 1
+  createCert: false
+  esConfig:
+    elasticsearch.yml: |
+      xpack.security.enabled: false
+      xpack.security.http.ssl:
+        enabled: false
+        verification_mode: none
+      xpack.security.transport.ssl:
+        enabled: false
+  #     xpack.security.transport.ssl.enabled: true
+  #     xpack.security.transport.ssl.verification_mode: certificate
+  #     # xpack.security.transport.ssl.keystore.path: /usr/share/elasticsearch/config/certs/elastic-certificates.p12
+  #     # xpack.security.transport.ssl.truststore.path: /usr/share/elasticsearch/config/certs/elastic-certificates.p12
+  protocol: http
+  settings:
+    discoveryType: single-node  
+    clusterName: singlenode-cluster
   # Set replicas to 1 and uncomment this to allow the instance to be scheduled on
   # a master node when deploying on a single node Minikube / Kind / etc cluster.
   # antiAffinity: "soft"
@@ -23,6 +40,12 @@ elasticsearch:
   #     cpu: "1000m"
   #     memory: "512M"
 
+  volumeClaimTemplate:
+    accessModes: 
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 5Gi
   # # Request smaller persistent volumes.
   # volumeClaimTemplate:
   #   accessModes: ["ReadWriteOnce"]
